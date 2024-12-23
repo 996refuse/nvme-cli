@@ -54,6 +54,7 @@
 #endif
 
 #include <libnvme.h>
+// #include "subprojects/libnvme/src/libnvme.h"
 
 #include "common.h"
 #include "nvme.h"
@@ -2249,6 +2250,7 @@ static int get_log(int argc, char **argv, struct command *cmd, struct plugin *pl
 	const char *raw = "output in raw format";
 	const char *offset_type = "offset type";
 	const char *xfer_len = "read chunk size (default 4k)";
+	const char *end_mark = "a bytes code mark indicating the end of the log";
 
 	_cleanup_nvme_dev_ struct nvme_dev *dev = NULL;
 	_cleanup_free_ unsigned char *log = NULL;
@@ -2268,6 +2270,7 @@ static int get_log(int argc, char **argv, struct command *cmd, struct plugin *pl
 		__u8	csi;
 		bool	ot;
 		__u32	xfer_len;
+		__u32	end_mark;
 	};
 
 	struct config cfg = {
@@ -2284,6 +2287,7 @@ static int get_log(int argc, char **argv, struct command *cmd, struct plugin *pl
 		.csi		= NVME_CSI_NVM,
 		.ot		= false,
 		.xfer_len	= 4096,
+		.end_mark   = 0x00000000,
 	};
 
 	NVME_ARGS(opts,
@@ -2299,7 +2303,8 @@ static int get_log(int argc, char **argv, struct command *cmd, struct plugin *pl
 		  OPT_FLAG("raw-binary",   'b', &cfg.raw_binary,   raw),
 		  OPT_BYTE("csi",          'y', &cfg.csi,          csi),
 		  OPT_FLAG("ot",           'O', &cfg.ot,           offset_type),
-		  OPT_UINT("xfer-len",     'x', &cfg.xfer_len,     xfer_len));
+		  OPT_UINT("xfer-len",     'x', &cfg.xfer_len,     xfer_len),
+		  OPT_UINT("end-mark",     'm', &cfg.end_mark,     end_mark));
 
 	err = parse_and_open(&dev, argc, argv, desc, opts);
 	if (err)
@@ -2348,9 +2353,15 @@ static int get_log(int argc, char **argv, struct command *cmd, struct plugin *pl
 		.len		= cfg.log_len,
 		.log		= log,
 		.result		= NULL,
+		.end_mark   = cfg.end_mark,
+		.log_len    = 0,
 	};
+
 	err = nvme_cli_get_log_page(dev, cfg.xfer_len, &args);
+	fprintf(stderr, "got args.end_mark %x\n", args.end_mark);
+	fprintf(stderr, "got args.log_len  %x\n", args.log_len);
 	if (!err) {
+		cfg.log_len = args.log_len;
 		if (!cfg.raw_binary) {
 			printf("Device:%s log-id:%d namespace-id:%#x\n", dev->name, cfg.log_id,
 			       cfg.namespace_id);
