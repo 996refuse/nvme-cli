@@ -1,5 +1,5 @@
 [wrap-git]
-url = https://github.com/996refuse/libnvme.git
+url = git@github.com:996refuse/libnvme.git
 revision = dc341b105a90669a28957f83302681343be3ed7c
 
 [provide]

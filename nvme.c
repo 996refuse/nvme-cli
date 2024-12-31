@@ -53,8 +53,8 @@
 	#include <sys/random.h>
 #endif
 
-#include <libnvme.h>
-// #include "subprojects/libnvme/src/libnvme.h"
+// #include <libnvme.h>
+#include "subprojects/libnvme/src/libnvme.h"
 
 #include "common.h"
 #include "nvme.h"
@@ -2354,7 +2354,7 @@ static int get_log(int argc, char **argv, struct command *cmd, struct plugin *pl
 		.log		= log,
 		.result		= NULL,
 		.end_mark   = cfg.end_mark,
-		.log_len    = 0,
+		.log_len    = cfg.log_len,
 	};
 
 	err = nvme_cli_get_log_page(dev, cfg.xfer_len, &args);
